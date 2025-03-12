@@ -37,13 +37,12 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     await db.execute('INSERT INTO user (felhasznalonev, email, jelszo) VALUES (?, ?, ?)', [name, email, hashedPassword]);
 
-    // Küldjük vissza a newUser flag-et
+    // Return user data for automatic login
     res.status(201).json({ 
       message: 'Sikeres regisztráció!',
       user: {
         username: name,
-        email: email,
-        newUser: true  // Ez jelzi, hogy új regisztráció történt
+        email: email
       }
     });
   } catch (error) {
@@ -52,111 +51,134 @@ app.post('/register', async (req, res) => {
 });
 
 
-console.log('Database connection:', db);
-
-app.post('/update-coupon', async (req, res) => {
-  const { email, coupon } = req.body;
-  console.log('Beérkezett adatok:', email, coupon);
-  
-  try {
-    // Először lekérjük a felhasználót
-    const [user] = await db.execute('SELECT * FROM user WHERE email = ?', [email]);
-    console.log('Talált felhasználó:', user);
-
-    if (user.length > 0) {
-      // Ha van felhasználó, frissítjük a kupont
-      const [result] = await db.execute(
-        'UPDATE user SET kupon = ? WHERE email = ?', 
-        [coupon, email]
-      );
-      console.log('Frissítés eredménye:', result);
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: 'Felhasználó nem található' });
-    }
-  } catch (error) {
-    console.log('Részletes hiba:', error);
-    res.status(500).json({ error: 'Adatbázis hiba' });
-  }
-});
-
-
-
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   
   try {
-    const [rows] = await db.execute('SELECT * FROM user WHERE email = ?', [email]);
-    if (rows.length > 0) {
+      const [rows] = await db.execute('SELECT * FROM user WHERE email = ?', [email]);
+
+      if (rows.length === 0) {
+          return res.status(400).json({ error: 'Felhasználó nem található!' });
+      }
+
       const user = rows[0];
+      // Mivel a regisztráció működik, használjuk ugyanazt a jelszó ellenőrzést
       const isMatch = await bcrypt.compare(password, user.jelszo);
-      
-      if (isMatch) {
-        return res.json({ 
+
+      if (!isMatch) {
+          return res.status(400).json({ error: 'Hibás jelszó!' });
+      }
+
+      return res.json({ 
           success: true,
           message: 'Sikeres bejelentkezés!',
           user: {
-            username: user.felhasznalonev,
-            email: user.email,
-            f_azonosito: user.f_azonosito  // Add this line
+              username: user.felhasznalonev,
+              email: user.email
           }
-        });
-      }
-    }
+      });
+
   } catch (error) {
-    console.error('Server error:', error);
-    return res.status(500).json({ error: 'Szerver hiba!' });
+      console.error('Server error:', error);
+      return res.status(500).json({ error: 'Szerver hiba!' });
   }
 });
-
-
-
 
 
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 app.post('/send-confirmation', async (req, res) => {
-  const { email, name, orderId, items, totalPrice, shippingAddress, discount } = req.body;
+  const { email, name, orderId, orderItems, shippingDetails, totalPrice, discount, shippingCost } = req.body;
   
-  const itemsList = items.map(item => 
-    `- ${item.nev} (${item.mennyiseg} db) - ${item.ar * item.mennyiseg} Ft`
-  ).join('\n');
+  const orderItemsList = orderItems.map(item => 
+    `<tr>
+      <td>${item.nev}</td>
+      <td>${item.mennyiseg} db</td>
+      <td>${item.ar.toLocaleString()} Ft</td>
+      <td>${(item.ar * item.mennyiseg).toLocaleString()} Ft</td>
+    </tr>`
+  ).join('');
 
   const msg = {
     to: email,
-    from: 'adaliclothing@gmail.com',
+    from: {
+      name: 'Adali Clothing',
+      email: 'adaliclothing@gmail.com'
+    },
     subject: 'Rendelés visszaigazolás - Adali Clothing',
     html: `
       <h2>Kedves ${name}!</h2>
-      <p>Köszönjük a rendelését!</p>
-      <p>Rendelési azonosító: #${orderId}</p>
+      <p>Köszönjük a rendelését! Az alábbiakban találja a rendelés részleteit.</p>
       
-      <h3>Rendelt termékek:</h3>
-      <pre>${itemsList}</pre>
+      <h3>Rendelési azonosító: #${orderId}</h3>
       
-      <p>Kedvezmény: ${discount}%</p>
-      <p>Végösszeg: ${totalPrice} Ft</p>
+      <h4>Rendelt termékek:</h4>
+      <table style="width:100%; border-collapse: collapse;">
+        <tr>
+          <th>Termék</th>
+          <th>Mennyiség</th>
+          <th>Egységár</th>
+          <th>Részösszeg</th>
+        </tr>
+        ${orderItemsList}
+      </table>
+
+      <h4>Szállítási adatok:</h4>
+      <p>
+        Név: ${name}<br>
+        Telefonszám: ${shippingDetails.phoneNumber}<br>
+        Cím: ${shippingDetails.zipCode} ${shippingDetails.city}, ${shippingDetails.address}
+      </p>
+
       
-      <h3>Szállítási cím:</h3>
-      <p>${shippingAddress}</p>
+      <p>
+        Részösszeg: ${(totalPrice - discount).toLocaleString()} Ft<br>
+        Kedvezmény: ${discount.toLocaleString()} Ft<br>
+        Szállítási költség: ${shippingCost.toLocaleString()} Ft<br>
+        <strong>Fizetendő összeg: ${totalPrice.toLocaleString()} Ft</strong>
+      </p>
     `
   };
 
   try {
-    await sgMail.send(msg);
+    console.log('Sending confirmation email...');
+    const result = await sgMail.send(msg);
+    console.log('Email sent successfully');
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Email küldési hiba' });
+    console.error('Email sending error:', error.response?.body);
+    res.status(500).json({ 
+      error: 'Email sending failed',
+      details: error.response?.body?.errors 
+    });
   }
 });
-
-
 
 const PORT = 4000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
 
+
+// Add this endpoint for storing coupons
+app.post('/update-coupon', async (req, res) => {
+  const { email, coupon } = req.body;
+  
+  try {
+    await db.execute(
+      'UPDATE user SET kupon = ? WHERE email = ?',
+      [coupon, email]
+    );
+    
+    res.json({ 
+      success: true,
+      message: 'Kupon sikeresen elmentve'
+    });
+  } catch (error) {
+    console.error('Coupon update error:', error);
+    res.status(500).json({ error: 'Kupon mentési hiba' });
+  }
+});
 
 

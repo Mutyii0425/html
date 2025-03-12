@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -34,7 +34,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(product?.imageUrl);
   const [darkMode, setDarkMode] = useState(true);
   const [sideMenuActive, setSideMenuActive] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -48,6 +48,13 @@ export default function ProductDetail() {
   const anchorRef = React.useRef(null);
   const [mainImage, setMainImage] = useState('');
   const [additionalImages, setAdditionalImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const uniqueImages = [...new Set([product?.imageUrl, ...(product?.images || [])])];
+
+
+
+
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -98,19 +105,26 @@ export default function ProductDetail() {
     }
     setOpen(false);
   };
-    const handleImageNavigation = (direction) => {
-      const allImages = [product.imageUrl, ...(product.images || [])];
-      const currentIndex = allImages.indexOf(selectedImage || product.imageUrl);
-      let newIndex;
     
-      if (direction === 'next') {
-        newIndex = (currentIndex + 1) % allImages.length;
-      } else {
-        newIndex = currentIndex - 1 < 0 ? allImages.length - 1 : currentIndex - 1;
-      }
-    
-      setSelectedImage(allImages[newIndex]);
-    };
+  
+  
+  const handleImageNavigation = (direction) => {
+    if (direction === 'next') {
+      setCurrentImageIndex((prev) => (prev + 1) % uniqueImages.length);
+    } else {
+      setCurrentImageIndex((prev) => (prev - 1 + uniqueImages.length) % uniqueImages.length);
+    }
+  };
+  
+  // For thumbnail clicks
+  const handleThumbnailClick = (index) => {
+    setCurrentImageIndex(index);
+  };
+  
+  
+  
+  
+
   const handleListKeyDown = (event) => {
     if (event.key === 'Tab') {
       event.preventDefault();
@@ -170,13 +184,23 @@ export default function ProductDetail() {
   };
 
   if (!product) return <div>Loading...</div>;
-    return (
-      <div style={{
-        backgroundColor: darkMode ? '#555' : '#f5f5f5',
-        color: darkMode ? 'white' : 'black',
-        minHeight: '100vh',
-        paddingBottom: '100px'  // Ez az új sor
-      }}>
+  const fadeInAnimation = {
+    '@keyframes fadeIn': {
+      '0%': { opacity: 0, transform: 'translateY(20px)' },
+      '100%': { opacity: 1, transform: 'translateY(0)' }
+    }
+  };
+  return (
+    <div style={{
+      backgroundColor: darkMode ? '#333' : '#f5f5f5',
+      backgroundImage: darkMode 
+        ? 'radial-gradient(#444 1px, transparent 1px)'
+        : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
+      color: darkMode ? 'white' : 'black',
+      minHeight: '100vh',
+      transition: 'all 0.3s ease-in-out' // Ez adja az átmenetet
+    }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -224,40 +248,110 @@ export default function ProductDetail() {
                   <ShoppingCartIcon />
                 </IconButton>
                 <Button
-                  ref={anchorRef}
-                  onClick={handleToggle}
-                  sx={{
-                    color: '#fff',
-                    zIndex: 1300,
-                    border: '1px solid #fff',
-                    borderRadius: '5px',
-                    padding: '5px 10px',
-                  }}
-                >
-                  Profil
-                </Button>
-                <Popper
+                                  ref={anchorRef}
+                                  onClick={handleToggle}
+                                  sx={{
+                                    color: '#fff',
+                                    zIndex: 1300,
+                                    border: '1px solid #fff',
+                                    borderRadius: '5px',
+                                    padding: '5px 10px',
+                                  }}
+                                >
+                                  Profil
+                                </Button>
+                                <Popper
                   open={open}
                   anchorEl={anchorRef.current}
                   placement="bottom-start"
                   transition
                   disablePortal
-                  sx={{ zIndex: 1300 }}
+                  sx={{ 
+                    zIndex: 1300,
+                    mt: 1, // Margin top for spacing
+                    '& .MuiPaper-root': {
+                      overflow: 'hidden',
+                      borderRadius: '12px',
+                      boxShadow: darkMode 
+                        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                      border: darkMode 
+                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                        : '1px solid rgba(0, 0, 0, 0.05)',
+                    }
+                  }}
                 >
                   {({ TransitionProps, placement }) => (
                     <Grow
                       {...TransitionProps}
                       style={{
-                        transformOrigin:
-                          placement === 'bottom-start' ? 'left top' : 'left bottom',
+                        transformOrigin: placement === 'bottom-start' ? 'left top' : 'left bottom',
                       }}
                     >
-                      <Paper>
+                      <Paper
+                        sx={{
+                          backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                          minWidth: '200px',
+                        }}
+                      >
                         <ClickAwayListener onClickAway={handleClose}>
-                          <MenuList autoFocusItem={open} onKeyDown={handleListKeyDown}>
-                            <MenuItem onClick={handleClose}>{userName} profilja</MenuItem>
-                            <MenuItem onClick={handleClose}>Fiókom</MenuItem>
-                            <MenuItem onClick={handleLogout}>Kijelentkezés</MenuItem>
+                          <MenuList 
+                            autoFocusItem={open} 
+                            onKeyDown={handleListKeyDown}
+                            sx={{ py: 1 }}
+                          >
+                            <MenuItem 
+                              onClick={handleClose}
+                              sx={{
+                                py: 1.5,
+                                px: 2,
+                                color: darkMode ? '#fff' : '#333',
+                                '&:hover': {
+                                  backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                                },
+                                gap: 2,
+                              }}
+                            >
+                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                {userName} profilja
+                              </Typography>
+                            </MenuItem>
+                
+                            <MenuItem 
+                              onClick={() => {
+                                handleClose();
+                                navigate('/fiokom');
+                              }}
+                              sx={{
+                                py: 1.5,
+                                px: 2,
+                                color: darkMode ? '#fff' : '#333',
+                                '&:hover': {
+                                  backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                                },
+                                gap: 2,
+                              }}
+                            >
+                              <Typography variant="body1">Fiókom</Typography>
+                            </MenuItem>
+                
+                            <MenuItem 
+                              onClick={handleLogout}
+                              sx={{
+                                py: 1.5,
+                                px: 2,
+                                color: '#ff4444',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255,68,68,0.1)',
+                                },
+                                gap: 2,
+                                borderTop: '1px solid',
+                                borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                mt: 1,
+                              }}
+                            >
+                              <Typography variant="body1">Kijelentkezés</Typography>
+                            </MenuItem>
                           </MenuList>
                         </ClickAwayListener>
                       </Paper>
@@ -330,186 +424,218 @@ export default function ProductDetail() {
             label="Dark Mode"
           />
         </FormGroup>
-        <Container maxWidth="lg" sx={{ mt: 8, mb: 12 }}>
-          <Card sx={{ 
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            backgroundColor: darkMode ? '#333' : 'white',
-            color: darkMode ? 'white' : 'black',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-          }}>
-            <Box sx={{ 
-              flex: '1.5',
-              p: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3
-            }}>
-              {/* Main Image Display */}
-              <Box sx={{
-                width: '100%',
-                height: '500px',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <IconButton 
-                  onClick={() => handleImageNavigation('prev')}
-                  sx={{
-                    position: 'absolute',
-                    left: 10,
-                    zIndex: 2,
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,0.5)'
-                    }
-                  }}
-                >
-                  <ArrowBackIosIcon />
-                </IconButton>
-                
-                <img
-                  src={selectedImage || product.imageUrl}
-                  alt={product.nev}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain'
-                  }}
-                />
-                
-                <IconButton 
-                  onClick={() => handleImageNavigation('next')}
-                  sx={{
-                    position: 'absolute',
-                    right: 10,
-                    zIndex: 2,
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,0.5)'
-                    }
-                  }}
-                >
-                  <ArrowForwardIosIcon />
-                </IconButton>
-              </Box>
+        <div style={{
+  backgroundColor: darkMode ? '#333' : '#f5f5f5',
+  backgroundImage: darkMode 
+    ? 'radial-gradient(#444 1px, transparent 1px)'
+    : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+  backgroundSize: '20px 20px',
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '2rem',
+  transition: 'all 0.3s ease-in-out'
+}}>
+  <Card sx={{
+    width: '90%',
+    maxWidth: '1200px',
+    background: darkMode 
+      ? 'linear-gradient(145deg, rgba(51, 51, 51, 0.9), rgba(68, 68, 68, 0.9))'
+      : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 0.9))',
+    backdropFilter: 'blur(8px)',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    boxShadow: darkMode 
+      ? '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
+      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.05)',
+    display: 'flex',
+    flexDirection: { xs: 'column', md: 'row' }
+  }}>
+    <Box sx={{
+      flex: '1.5',
+      p: 3,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 3
+    }}>
+      <Box sx={{
+        width: '100%',
+        height: '400px',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <IconButton
+          onClick={() => handleImageNavigation('prev')}
+          sx={{
+            position: 'absolute',
+            left: 10,
+            zIndex: 2,
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(4px)',
+            '&:hover': {
+              background: 'rgba(255,255,255,0.3)',
+            }
+          }}
+        >
+          <ArrowBackIosIcon />
+        </IconButton>
 
-              {/* Thumbnail Images */}
-              <Grid container spacing={2}>
-                <Grid item xs={3}>
-                  <Box sx={{
-                    height: '150px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    '&:hover': { opacity: 0.8 }
-                  }}
-                  onClick={() => setSelectedImage(product.imageUrl)}
-                  >
-                    <img
-                      src={product.imageUrl}
-                      alt={product.nev}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain'
-                      }}
-                    />
-                  </Box>
-                </Grid>
-                {Array.isArray(product?.images) && product.images.map((img, index) => (
-                  <Grid item xs={3} key={index}>
-                    <Box sx={{
-                      height: '150px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      '&:hover': { opacity: 0.8 }
-                    }}
-                    onClick={() => setSelectedImage(img)}
-                    >
-                      <img
-                        src={img}
-                        alt={`${product.nev} - ${index + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain'
-                        }}
-                      />
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+        <img
+  src={uniqueImages[currentImageIndex]}
+  alt={product.nev}
+  style={{
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain'
+  }}
+/>
 
-            {/* Product Info Section */}
-            <Box sx={{ 
-              flex: '1',
-              p: 4,
-              backgroundColor: darkMode ? '#444' : '#f8f8f8',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3
-            }}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {product.nev}
-              </Typography>
-              
-              <Typography variant="h5" sx={{ 
-                color: darkMode ? '#90caf9' : '#1976d2',
-                fontWeight: 'bold'
-              }}>
-                {product.ar} Ft
-              </Typography>
+        <IconButton
+          onClick={() => handleImageNavigation('next')}
+          sx={{
+            position: 'absolute',
+            right: 10,
+            zIndex: 2,
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(4px)',
+            '&:hover': {
+              background: 'rgba(255,255,255,0.3)',
+            }
+          }}
+        >
+          <ArrowForwardIosIcon />
+        </IconButton>
+      </Box>
 
-              <Typography variant="body1" sx={{ 
-                backgroundColor: darkMode ? '#333' : '#fff',
-                p: 2,
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-                {product.leiras}
-              </Typography>
+      
+               
+      <Grid container spacing={1}>
+  {uniqueImages.map((img, index) => (
+    <Grid item xs={3} key={index}>
+      <Box
+        sx={{
+          height: '80px',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          border: currentImageIndex === index ? '2px solid #90caf9' : 'none',
+          '&:hover': { opacity: 0.8 }
+        }}
+        onClick={() => handleThumbnailClick(index)}
+      >
+        <img
+          src={img}
+          alt={`${product.nev} - ${index + 1}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain'
+          }}
+        />
+      </Box>
+    </Grid>
+  ))}
+</Grid>
+             
 
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                p: 2,
-                backgroundColor: darkMode ? '#333' : '#fff',
-                borderRadius: '8px'
-              }}>
-                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                  Méret:
-                </Typography>
-                <Typography variant="body1">
-                  {product.meret}
-                </Typography>
-              </Box>
+    </Box>
 
-              <Button 
-                variant="contained"
-                onClick={addToCart}
-                sx={{ 
-                  mt: 'auto',
-                  py: 2,
-                  backgroundColor: darkMode ? '#90caf9' : '#1976d2',
-                  '&:hover': {
-                    backgroundColor: darkMode ? '#42a5f5' : '#1565c0',
-                  }
-                }}
-              >
-                Kosárba
-              </Button>
-            </Box>
-          </Card>
-        </Container>
+    <Box sx={{
+      flex: 1,
+      p: 4,
+      background: darkMode 
+        ? 'linear-gradient(145deg, rgba(68, 68, 68, 0.9), rgba(51, 51, 51, 0.9))'
+        : 'linear-gradient(145deg, rgba(248, 248, 248, 0.9), rgba(255, 255, 255, 0.9))',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 3
+    }}>
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 600,
+          background: darkMode 
+            ? 'linear-gradient(45deg, #fff, #ccc)'
+            : 'linear-gradient(45deg, #333, #666)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        {product.nev}
+      </Typography>
+
+      <Typography
+        variant="h6"
+        sx={{
+          color: darkMode ? '#90caf9' : '#1976d2',
+          fontWeight: 600
+        }}
+      >
+        {product.ar.toLocaleString()} Ft
+      </Typography>
+
+      <Typography
+        variant="body1"
+        sx={{
+          color: darkMode ? '#aaa' : '#666',
+          background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+          p: 2,
+          color: '#fff',
+          borderRadius: '8px',
+          lineHeight: 1.6
+        }}
+      >
+        {product.leiras}
+      </Typography>
+
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        p: 2,
+        background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        borderRadius: '8px'
+      }}>
+        <Typography variant="body1" sx={{ fontWeight: 600, color: '#fff' }}>
+  Méret:
+</Typography>
+<Typography variant="body1" sx={{ color: '#fff' }}>
+  {product.meret}
+</Typography>
+      </Box>
+
+      <Button
+        onClick={addToCart}
+        sx={{
+          py: 1.5,
+          px: 3,
+          borderRadius: '10px',
+          background: darkMode 
+            ? 'linear-gradient(45deg, #90caf9, #42a5f5)'
+            : 'linear-gradient(45deg, #1976d2, #1565c0)',
+          color: '#fff',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+          }
+        }}
+      >
+        Kosárba
+      </Button>
+    </Box>
+  </Card>
+</div>
+
         {showAlert && (
   <Box
     sx={{
@@ -833,4 +959,3 @@ export default function ProductDetail() {
     </div>
   );
 }
-

@@ -229,6 +229,178 @@ app.delete('/termekek/:id', (req, res) => {
   });
 });
 
+app.get('/users', (req, res) => {
+  const query = 'SELECT * FROM user';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.log('Hiba a felhasználók lekérésénél:', err);
+      res.status(500).json({ error: 'Adatbázis hiba' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// Felhasználó törlése
+app.delete('/users/:id', (req, res) => {
+  const userId = req.params.id;
+  const query = 'DELETE FROM user WHERE f_azonosito = ?';
+
+  db.query(query, [userId], (err, result) => {
+    if (err) {
+      console.log('Hiba a felhasználó törlésénél:', err);
+      res.status(500).json({ error: 'Hiba a törlés során' });
+      return;
+    }
+    res.json({ message: 'Felhasználó sikeresen törölve' });
+  });
+});
+app.get('/user/:id', (req, res) => {
+  const userId = req.params.id;
+  console.log("Fetching user data for ID:", userId);
+
+  const query = 'SELECT felhasznalonev, email FROM user WHERE f_azonosito = ?';
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.log('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    console.log("Query results:", results);
+    if (results && results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  });
+});
+
+app.post('/save-rating', (req, res) => {
+  console.log('Beérkezett adatok:', req.body); // Ellenőrzéshez
+  
+  const { rating, email, velemeny } = req.body;
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  db.query('SELECT f_azonosito FROM user WHERE email = ?', [email], (err, userResult) => {
+    if (err) {
+      console.log('User lekérés hiba:', err);
+      return res.status(500).json({ error: 'Adatbázis hiba' });
+    }
+
+    const userId = userResult[0].f_azonosito;
+    console.log('User ID:', userId); // Ellenőrzéshez
+
+    db.query(
+      'INSERT INTO ratings (f_azonosito, rating, velemeny, date) VALUES (?, ?, ?, ?)',
+      [userId, rating, velemeny, currentDate],
+      (err, result) => {
+        if (err) {
+          console.log('Mentési hiba:', err);
+          return res.status(500).json({ error: 'Mentési hiba' });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+});
+
+app.get('/get-all-ratings', (req, res) => {
+  const query = `
+    SELECT r.rating_id, r.rating, r.date, r.velemeny, u.felhasznalonev 
+    FROM ratings r 
+    JOIN user u ON r.f_azonosito = u.f_azonosito 
+    ORDER BY r.date DESC
+  `;
+  
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Adatbázis hiba:', err);
+      res.status(500).json({ error: 'Adatbázis hiba' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// DELETE rating
+app.delete('/delete-rating/:id', (req, res) => {
+  const ratingId = req.params.id;
+  
+  db.query('DELETE FROM ratings WHERE rating_id = ?', [ratingId], (err, result) => {
+    if (err) {
+      console.error('Törlési hiba:', err);
+      return res.status(500).json({ error: 'Adatbázis hiba' });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.put('/update-rating/:id', (req, res) => {
+  const { rating, velemeny } = req.body;
+  const ratingId = req.params.id;
+  
+  const query = 'UPDATE ratings SET rating = ?, velemeny = ? WHERE rating_id = ?';
+  db.query(query, [rating, velemeny, ratingId], (err, result) => {
+    if (err) {
+      console.log('Update error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.post('/add-rating', (req, res) => {
+  const { felhasznalonev, rating, velemeny } = req.body;
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  // Get user ID first
+  db.query('SELECT f_azonosito FROM user WHERE felhasznalonev = ?', [felhasznalonev], (err, users) => {
+    if (err) {
+      console.log('User query error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Insert rating with user ID
+    const userId = users[0].f_azonosito;
+    db.query(
+      'INSERT INTO ratings (f_azonosito, rating, velemeny, date) VALUES (?, ?, ?, ?)',
+      [userId, rating, velemeny, currentDate],
+      (err, result) => {
+        if (err) {
+          console.log('Insert error:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+});
+
+app.get('/check-user/:username', (req, res) => {
+  const username = req.params.username;
+  db.query('SELECT email FROM user WHERE felhasznalonev = ?', [username], (err, results) => {
+    if (err || results.length === 0) {
+      res.json({ exists: false });
+    } else {
+      res.json({ exists: true, email: results[0].email });
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 const port = 5000;
 app.listen(port, () => {

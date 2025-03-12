@@ -159,15 +159,13 @@ import Footer from './footer';
       return (
         // A fő div-nél adjuk hozzá a transition tulajdonságot:
 <div style={{
-  backgroundColor: darkMode ? '#333' : '#f5f5f5',
-  backgroundImage: darkMode 
-    ? 'radial-gradient(#444 1px, transparent 1px)'
-    : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
-  backgroundSize: '20px 20px',
-  color: darkMode ? 'white' : 'black',
-  minHeight: '100vh',
-  transition: 'all 0.3s ease-in-out' // Ez adja az átmenetet
-}}>
+    backgroundColor: darkMode ? '#333' : '#f5f5f5',
+    backgroundImage: darkMode 
+      ? 'radial-gradient(#444 1px, transparent 1px)'
+      : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+    backgroundSize: '20px 20px',
+    minHeight: '100vh'
+  }}>
 
         <div style={{
           display: 'flex',
@@ -226,47 +224,117 @@ import Footer from './footer';
                     <ShoppingCartIcon />
                   </Badge>
                 </IconButton>
-                <Button
-                  ref={anchorRef}
-                  onClick={handleToggle}
-                  sx={{
-                    color: '#fff',
-                    zIndex: 1300,
-                    border: '1px solid #fff',
-                    borderRadius: '5px',
-                    padding: '5px 10px',
-                  }}
-                >
-                  Profil
-                </Button>
-                <Popper
-                  open={open}
-                  anchorEl={anchorRef.current}
-                  placement="bottom-start"
-                  transition
-                  disablePortal
-                  sx={{ zIndex: 1300 }}
-                >
-                  {({ TransitionProps, placement }) => (
-                    <Grow
-                      {...TransitionProps}
-                      style={{
-                        transformOrigin:
-                          placement === 'bottom-start' ? 'left top' : 'left bottom',
-                      }}
-                    >
-                      <Paper>
-                        <ClickAwayListener onClickAway={handleClose}>
-                          <MenuList autoFocusItem={open} onKeyDown={handleListKeyDown}>
-                            <MenuItem onClick={handleClose}>{userName} profilja</MenuItem>
-                            <MenuItem onClick={handleClose}>Fiókom</MenuItem>
-                            <MenuItem onClick={handleLogout}>Kijelentkezés</MenuItem>
-                          </MenuList>
-                        </ClickAwayListener>
-                      </Paper>
-                    </Grow>
-                  )}
-                </Popper>
+               <Button
+                                 ref={anchorRef}
+                                 onClick={handleToggle}
+                                 sx={{
+                                   color: '#fff',
+                                   zIndex: 1300,
+                                   border: '1px solid #fff',
+                                   borderRadius: '5px',
+                                   padding: '5px 10px',
+                                 }}
+                               >
+                                 Profil
+                               </Button>
+                               <Popper
+                 open={open}
+                 anchorEl={anchorRef.current}
+                 placement="bottom-start"
+                 transition
+                 disablePortal
+                 sx={{ 
+                   zIndex: 1300,
+                   mt: 1, // Margin top for spacing
+                   '& .MuiPaper-root': {
+                     overflow: 'hidden',
+                     borderRadius: '12px',
+                     boxShadow: darkMode 
+                       ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                       : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                     border: darkMode 
+                       ? '1px solid rgba(255, 255, 255, 0.1)'
+                       : '1px solid rgba(0, 0, 0, 0.05)',
+                   }
+                 }}
+               >
+                 {({ TransitionProps, placement }) => (
+                   <Grow
+                     {...TransitionProps}
+                     style={{
+                       transformOrigin: placement === 'bottom-start' ? 'left top' : 'left bottom',
+                     }}
+                   >
+                     <Paper
+                       sx={{
+                         backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                         minWidth: '200px',
+                       }}
+                     >
+                       <ClickAwayListener onClickAway={handleClose}>
+                         <MenuList 
+                           autoFocusItem={open} 
+                           onKeyDown={handleListKeyDown}
+                           sx={{ py: 1 }}
+                         >
+                           <MenuItem 
+                             onClick={handleClose}
+                             sx={{
+                               py: 1.5,
+                               px: 2,
+                               color: darkMode ? '#fff' : '#333',
+                               '&:hover': {
+                                 backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                               },
+                               gap: 2,
+                             }}
+                           >
+                             <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                               {userName} profilja
+                             </Typography>
+                           </MenuItem>
+               
+                           <MenuItem 
+                             onClick={() => {
+                               handleClose();
+                               navigate('/fiokom');
+                             }}
+                             sx={{
+                               py: 1.5,
+                               px: 2,
+                               color: darkMode ? '#fff' : '#333',
+                               '&:hover': {
+                                 backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                               },
+                               gap: 2,
+                             }}
+                           >
+                             <Typography variant="body1">Fiókom</Typography>
+                           </MenuItem>
+               
+                           <MenuItem 
+                             onClick={handleLogout}
+                             sx={{
+                               py: 1.5,
+                               px: 2,
+                               color: '#ff4444',
+                               '&:hover': {
+                                 backgroundColor: 'rgba(255,68,68,0.1)',
+                               },
+                               gap: 2,
+                               borderTop: '1px solid',
+                               borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                               mt: 1,
+                             }}
+                           >
+                             <Typography variant="body1">Kijelentkezés</Typography>
+                           </MenuItem>
+                         </MenuList>
+                       </ClickAwayListener>
+                     </Paper>
+                   </Grow>
+                 )}
+               </Popper>
               </Box>
             ) : (
               <>
@@ -334,7 +402,8 @@ import Footer from './footer';
           />
         </FormGroup>
 
-        <Container maxWidth="xl" sx={{ mt: 8, mb: 4 }}>
+       
+        <Container maxWidth="xl" sx={{ mt: 8, mb: 8 }}>
           <Typography variant="h4" sx={{ mb: 4, textAlign: 'center', color: darkMode ? 'white' : 'black' }}>
             Összes Termékünk
           </Typography>
@@ -420,12 +489,12 @@ import Footer from './footer';
     {filteredProducts.map((product) => (
       <Grid item xs={12} sm={6} md={4} lg={3} key={`product-${product.id}`}>
         <Link to={`/termek/${product.id}`} style={{ textDecoration: 'none' }}>
-          <Card sx={{
+           <Card sx={{
             height: '500px',
             backgroundColor: darkMode ? '#333' : 'white',
             color: darkMode ? 'white' : 'black',
             transition: 'transform 0.2s',
-            border: '1px solid #fff',
+            border: darkMode ? '1px solid #fff' : '1px solid #000',
             '&:hover': {
               transform: 'scale(1.02)'
             }
@@ -585,11 +654,19 @@ import Footer from './footer';
 )}
 
         </Container>
+        <Box sx={{ 
+      backgroundColor: darkMode ? '#333' : '#f5f5f5',
+      backgroundImage: darkMode 
+        ? 'radial-gradient(#444 1px, transparent 1px)'
+        : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
+      pb: 8 
+    }}>
+    </Box>
         <Footer />
+   
       </div>
     );
   };
   
   export default Oterm;
-  
-  

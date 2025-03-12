@@ -176,12 +176,22 @@ export default function TermekReszletek() {
 
   if (!product) return <div>Loading...</div>;
 
+  const fadeInAnimation = {
+    '@keyframes fadeIn': {
+      '0%': { opacity: 0, transform: 'translateY(20px)' },
+      '100%': { opacity: 1, transform: 'translateY(0)' }
+    }
+  };
   return (
     <div style={{
-      backgroundColor: darkMode ? '#555' : '#f5f5f5',
+      backgroundColor: darkMode ? '#333' : '#f5f5f5',
+      backgroundImage: darkMode 
+        ? 'radial-gradient(#444 1px, transparent 1px)'
+        : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
       color: darkMode ? 'white' : 'black',
       minHeight: '100vh',
-      paddingBottom: '100px'
+      transition: 'all 0.3s ease-in-out' // Ez adja az átmenetet
     }}>
       <div style={{
         display: 'flex',
@@ -240,47 +250,117 @@ export default function TermekReszletek() {
                   <ShoppingCartIcon />
                 </Badge>
               </IconButton>
-              <Button
-                ref={anchorRef}
-                onClick={handleToggle}
-                sx={{
-                  color: '#fff',
-                  zIndex: 1300,
-                  border: '1px solid #fff',
-                  borderRadius: '5px',
-                  padding: '5px 10px',
-                }}
-              >
-                Profil
-              </Button>
-              <Popper
-                open={open}
-                anchorEl={anchorRef.current}
-                placement="bottom-start"
-                transition
-                disablePortal
-                sx={{ zIndex: 1300 }}
-              >
-                {({ TransitionProps, placement }) => (
-                  <Grow
-                    {...TransitionProps}
-                    style={{
-                      transformOrigin:
-                        placement === 'bottom-start' ? 'left top' : 'left bottom',
+            <Button
+                              ref={anchorRef}
+                              onClick={handleToggle}
+                              sx={{
+                                color: '#fff',
+                                zIndex: 1300,
+                                border: '1px solid #fff',
+                                borderRadius: '5px',
+                                padding: '5px 10px',
+                              }}
+                            >
+                              Profil
+                            </Button>
+                            <Popper
+              open={open}
+              anchorEl={anchorRef.current}
+              placement="bottom-start"
+              transition
+              disablePortal
+              sx={{ 
+                zIndex: 1300,
+                mt: 1, // Margin top for spacing
+                '& .MuiPaper-root': {
+                  overflow: 'hidden',
+                  borderRadius: '12px',
+                  boxShadow: darkMode 
+                    ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                    : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                  border: darkMode 
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.05)',
+                }
+              }}
+            >
+              {({ TransitionProps, placement }) => (
+                <Grow
+                  {...TransitionProps}
+                  style={{
+                    transformOrigin: placement === 'bottom-start' ? 'left top' : 'left bottom',
+                  }}
+                >
+                  <Paper
+                    sx={{
+                      backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                      minWidth: '200px',
                     }}
                   >
-                    <Paper>
-                      <ClickAwayListener onClickAway={handleClose}>
-                        <MenuList autoFocusItem={open} onKeyDown={handleListKeyDown}>
-                          <MenuItem onClick={handleClose}>{userName} profilja</MenuItem>
-                          <MenuItem onClick={handleClose}>Fiókom</MenuItem>
-                          <MenuItem onClick={handleLogout}>Kijelentkezés</MenuItem>
-                        </MenuList>
-                      </ClickAwayListener>
-                    </Paper>
-                  </Grow>
-                )}
-              </Popper>
+                    <ClickAwayListener onClickAway={handleClose}>
+                      <MenuList 
+                        autoFocusItem={open} 
+                        onKeyDown={handleListKeyDown}
+                        sx={{ py: 1 }}
+                      >
+                        <MenuItem 
+                          onClick={handleClose}
+                          sx={{
+                            py: 1.5,
+                            px: 2,
+                            color: darkMode ? '#fff' : '#333',
+                            '&:hover': {
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                            },
+                            gap: 2,
+                          }}
+                        >
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {userName} profilja
+                          </Typography>
+                        </MenuItem>
+            
+                        <MenuItem 
+                          onClick={() => {
+                            handleClose();
+                            navigate('/fiokom');
+                          }}
+                          sx={{
+                            py: 1.5,
+                            px: 2,
+                            color: darkMode ? '#fff' : '#333',
+                            '&:hover': {
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                            },
+                            gap: 2,
+                          }}
+                        >
+                          <Typography variant="body1">Fiókom</Typography>
+                        </MenuItem>
+            
+                        <MenuItem 
+                          onClick={handleLogout}
+                          sx={{
+                            py: 1.5,
+                            px: 2,
+                            color: '#ff4444',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255,68,68,0.1)',
+                            },
+                            gap: 2,
+                            borderTop: '1px solid',
+                            borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            mt: 1,
+                          }}
+                        >
+                          <Typography variant="body1">Kijelentkezés</Typography>
+                        </MenuItem>
+                      </MenuList>
+                    </ClickAwayListener>
+                  </Paper>
+                </Grow>
+              )}
+            </Popper>
             </Box>
           ) : (
             <>
@@ -348,103 +428,150 @@ export default function TermekReszletek() {
         />
       </FormGroup>
 
-      <Container maxWidth="lg" sx={{ mt: 8, mb: 12 }}>
-        <Card sx={{ 
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          backgroundColor: darkMode ? '#333' : 'white',
-          color: darkMode ? 'white' : 'black',
-          borderRadius: '16px',
+      <div style={{
+  backgroundColor: darkMode ? '#333' : '#f5f5f5',
+  backgroundImage: darkMode 
+    ? 'radial-gradient(#444 1px, transparent 1px)'
+    : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+  backgroundSize: '20px 20px',
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '2rem',
+  transition: 'all 0.3s ease-in-out'
+}}>
+  <Card
+    sx={{
+      width: '800px',
+      background: darkMode 
+        ? 'linear-gradient(145deg, rgba(51, 51, 51, 0.9), rgba(68, 68, 68, 0.9))'
+        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 0.9))',
+      backdropFilter: 'blur(8px)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      boxShadow: darkMode 
+        ? '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
+        : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.05)',
+      animation: 'fadeIn 0.6s ease-out',
+      transform: 'translateY(0)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: darkMode 
+          ? '0 12px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.15)'
+          : '0 12px 40px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(0, 0, 0, 0.08)'
+      }
+    }}
+  >
+    <CardContent sx={{ p: 3 }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        gap: 3,
+        alignItems: 'center'
+      }}>
+        <Box sx={{
+          width: '300px',
+          height: '300px',
+          borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+          padding: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
-          <Box sx={{ 
-            flex: '1.5',
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3
-          }}>
-            <Box sx={{
+          <img
+            src={imageMap[product.imageUrl]}
+            alt={product.nev}
+            style={{
               width: '100%',
-              height: '500px',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-            }}>
-              <img
-                src={imageMap[product.imageUrl]}
-                alt={product.nev}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box sx={{ 
-            flex: '1',
-            p: 4,
-            backgroundColor: darkMode ? '#444' : '#f8f8f8',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3
-          }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-              {product.nev}
-            </Typography>
-            
-            <Typography variant="h5" sx={{ 
-              color: darkMode ? '#90caf9' : '#1976d2',
-              fontWeight: 'bold'
-            }}>
-              {product.ar} Ft
-            </Typography>
-
-            <Typography variant="body1" sx={{ 
-              backgroundColor: darkMode ? '#333' : '#fff',
-              p: 2,
+              height: '100%',
+              objectFit: 'contain',
               borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              {product.termekleiras}
-            </Typography>
+              transition: 'transform 0.3s ease',
+            }}
+          />
+        </Box>
 
-            <Box sx={{
+        <Box sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.5
+        }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 600,
+              background: darkMode 
+                ? 'linear-gradient(45deg, #fff, #ccc)'
+                : 'linear-gradient(45deg, #333, #666)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {product.nev}
+          </Typography>
+
+          <Typography
+            variant="h6"
+            sx={{
+              color: darkMode ? '#90caf9' : '#1976d2',
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: 2,
-              p: 2,
-              backgroundColor: darkMode ? '#333' : '#fff',
-              borderRadius: '8px'
-            }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Kategória:
-              </Typography>
-              <Typography variant="body1">
-                {product.kategoria}
-              </Typography>
-            </Box>
+              gap: 1
+            }}
+          >
+            {product.ar.toLocaleString()} Ft
+          </Typography>
 
-            <Button 
-              variant="contained"
-              onClick={handleAddToCart}
-              sx={{ 
-                mt: 'auto',
-                py: 2,
-                backgroundColor: darkMode ? '#90caf9' : '#1976d2',
-                '&:hover': {
-                  backgroundColor: darkMode ? '#42a5f5' : '#1565c0',
-                }
-              }}
-            >
-              Kosárba
-            </Button>
-          </Box>
-        </Card>
-      </Container>
+          <Typography
+            variant="body1"
+            sx={{
+              color: darkMode ? '#aaa' : '#666',
+              background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              p: 2,
+              borderRadius: '8px',
+              lineHeight: 1.6
+            }}
+          >
+            {product.termekleiras}
+          </Typography>
+
+          <Button
+            onClick={handleAddToCart}
+            sx={{
+              mt: 1,
+              py: 1.5,
+              px: 3,
+              borderRadius: '10px',
+              background: darkMode 
+                ? 'linear-gradient(45deg, #90caf9, #42a5f5)'
+                : 'linear-gradient(45deg, #1976d2, #1565c0)',
+              color: '#fff',
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+              }
+            }}
+          >
+            Kosárba
+          </Button>
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+</div>
+
+
+
       {showAlert && (
   <Box
     sx={{
@@ -813,11 +940,21 @@ export default function TermekReszletek() {
   </Box>
 )}
 
-      <Footer />
+<Footer sx={{
+  backgroundColor: darkMode ? '#333' : '#f5f5f5',
+  backgroundImage: darkMode 
+    ? 'radial-gradient(#444 1px, transparent 1px)'
+    : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+  backgroundSize: '20px 20px',
+  backdropFilter: 'blur(8px)',
+  borderTop: darkMode 
+    ? '1px solid rgba(255, 255, 255, 0.1)'
+    : '1px solid rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease-in-out'
+}} />
     </div>
   );
 }
-
 
 
 

@@ -32,6 +32,8 @@ import gatyak from './gatyak.png';
 import Footer from './footer';
 import Menu from './menu2';
 import { useInView } from 'react-intersection-observer';
+import { Rating } from '@mui/material';
+
 
 
 
@@ -51,10 +53,45 @@ import { useNavigate } from 'react-router-dom';
     const [wonPrize, setWonPrize] = useState('')
     const [spinComplete, setSpinComplete] = useState(false);
     const [showLogoutAlert, setShowLogoutAlert] = useState(false);
-   
+    const [averageRating, setAverageRating] = useState(0);
+    const [totalRatings, setTotalRatings] = useState(0);
+    const [ratings, setRatings] = useState([]);
+    const scrollbarRef = useRef(null);
+    const contentRef = useRef(null);
 
-
-
+    useEffect(() => {
+      const scrollbar = scrollbarRef.current;
+      const content = contentRef.current;
+    
+      const handleScroll = () => {
+        const scrollPercentage = scrollbar.scrollLeft / (scrollbar.scrollWidth - scrollbar.clientWidth);
+        const scrollAmount = (content.scrollWidth - content.clientWidth) * scrollPercentage;
+        content.scrollLeft = scrollAmount;
+      };
+    
+      if (scrollbar && content) {
+        scrollbar.addEventListener('scroll', handleScroll);
+        return () => scrollbar.removeEventListener('scroll', handleScroll);
+      }
+    }, []);
+    
+    
+    useEffect(() => {
+      const fetchRatings = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/get-all-ratings');
+          const data = await response.json();
+          console.log('Fetched ratings:', data);
+          setRatings(data || []);
+        } catch (error) {
+          console.error('Error fetching ratings:', error);
+        }
+      };
+      
+      fetchRatings();
+    }, []);
+      
+ 
     
     
 
@@ -284,20 +321,20 @@ import { useNavigate } from 'react-router-dom';
     const images = [
       {
         img: polok,
-        title: "Új kollekció érkezett!",
-        subtitle: "Fedezd fel a legújabb pólóinkat és találd meg a stílusodhoz illőt!",
-        imageStyle: {} 
+        title: "Friss drip érkezett!",
+        subtitle: "Dobd fel a szettjeid a legújabb kollekcióval! Ne maradj le róluk.",
+        imageStyle: {}
       },
       {
         img: gatyak,
-        title: "Nyári kollekció",
-        subtitle: "Könnyű, szellős darabok a meleg napokra",
+        title: "Nyári szettek",
+        subtitle: "Lazulós cuccok a forró napokra. Válaszd ki a stílusodhoz illőt!",
         imageStyle: { transform: 'translateY(-50px)' }
       },
       {
         img: pulcsik,
-        title: "Limitált széria",
-        subtitle: "Szerezd meg egyedi darabjainkat, amíg készleten vannak",
+        title: "Limited drip",
+        subtitle: "Limitált darabok, egyedi design. Csapj le rájuk, amíg van készleten!",
         imageStyle: {}
       }
     ];
@@ -524,38 +561,104 @@ import { useNavigate } from 'react-router-dom';
                   Profil
                 </Button>
                 <Popper
-                  open={open}
-                  anchorEl={anchorRef.current}
-                  placement="bottom-start"
-                  transition
-                  disablePortal
-                  sx={{ zIndex: 1300 }}  // Ez az érték magasabb mint a dark mode switch z-indexe
-                >
-                  {({ TransitionProps, placement }) => (
-                    <Grow
-                      {...TransitionProps}
-                      style={{
-                        transformOrigin:
-                          placement === 'bottom-start' ? 'left top' : 'left bottom',
-                      }}
-                    >
-                      <Paper>
-                        <ClickAwayListener onClickAway={handleClose}>
-                          <MenuList autoFocusItem={open} onKeyDown={handleListKeyDown}>
-                            <MenuItem onClick={handleClose}>{userName} profilja</MenuItem>
-                            <MenuItem onClick={() => {
-      handleClose();
-      navigate('/fiokom');
-    }}>
-      Fiókom
-    </MenuItem>
-                            <MenuItem onClick={handleLogout}>Kijelentkezés</MenuItem>
-                          </MenuList>
-                        </ClickAwayListener>
-                      </Paper>
-                    </Grow>
-                  )}
-                </Popper>
+  open={open}
+  anchorEl={anchorRef.current}
+  placement="bottom-start"
+  transition
+  disablePortal
+  sx={{ 
+    zIndex: 1300,
+    mt: 1, // Margin top for spacing
+    '& .MuiPaper-root': {
+      overflow: 'hidden',
+      borderRadius: '12px',
+      boxShadow: darkMode 
+        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+      border: darkMode 
+        ? '1px solid rgba(255, 255, 255, 0.1)'
+        : '1px solid rgba(0, 0, 0, 0.05)',
+    }
+  }}
+>
+  {({ TransitionProps, placement }) => (
+    <Grow
+      {...TransitionProps}
+      style={{
+        transformOrigin: placement === 'bottom-start' ? 'left top' : 'left bottom',
+      }}
+    >
+      <Paper
+        sx={{
+          backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+          minWidth: '200px',
+        }}
+      >
+        <ClickAwayListener onClickAway={handleClose}>
+          <MenuList 
+            autoFocusItem={open} 
+            onKeyDown={handleListKeyDown}
+            sx={{ py: 1 }}
+          >
+            <MenuItem 
+              onClick={handleClose}
+              sx={{
+                py: 1.5,
+                px: 2,
+                color: darkMode ? '#fff' : '#333',
+                '&:hover': {
+                  backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                },
+                gap: 2,
+              }}
+            >
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {userName} profilja
+              </Typography>
+            </MenuItem>
+
+            <MenuItem 
+              onClick={() => {
+                handleClose();
+                navigate('/fiokom');
+              }}
+              sx={{
+                py: 1.5,
+                px: 2,
+                color: darkMode ? '#fff' : '#333',
+                '&:hover': {
+                  backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                },
+                gap: 2,
+              }}
+            >
+              <Typography variant="body1">Fiókom</Typography>
+            </MenuItem>
+
+            <MenuItem 
+              onClick={handleLogout}
+              sx={{
+                py: 1.5,
+                px: 2,
+                color: '#ff4444',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,68,68,0.1)',
+                },
+                gap: 2,
+                borderTop: '1px solid',
+                borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                mt: 1,
+              }}
+            >
+              <Typography variant="body1">Kijelentkezés</Typography>
+            </MenuItem>
+          </MenuList>
+        </ClickAwayListener>
+      </Paper>
+    </Grow>
+  )}
+</Popper>
+
               </Box>
             ) : (
               <>
@@ -704,7 +807,8 @@ import { useNavigate } from 'react-router-dom';
               marginTop: '10px',
             }}
           >
-            Nézd meg a felhasználók által feltöltött termékeket!
+            Csekk a legmenőbb felhasználó cuccokat! Találd meg a következő kedvenc ruhadarabod.
+
           </Typography>
           </Card>
         
@@ -762,7 +866,7 @@ import { useNavigate } from 'react-router-dom';
               marginTop: '10px',
             }}
           >
-            Nézd meg az összes termékünket
+            Nézd meg a teljes kollekciót! Tuti, hogy találsz valamit ami tetszik.
           </Typography>
           </Card>
           <Card
@@ -818,11 +922,35 @@ import { useNavigate } from 'react-router-dom';
                 marginTop: '10px',
               }}
             >
-              Töltsd fel a ruháidat
+              Dobd fel a saját cuccaidat! Legyél Te is az Adali Clothing része.
             </Typography>
           
           </Card>
           </div>
+
+          <Typography 
+  variant="h1" 
+  sx={{
+    textAlign: 'center',
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    background: darkMode 
+      ? 'linear-gradient(45deg,rgb(255, 255, 255),rgb(255, 255, 255))'
+      : 'linear-gradient(45deg,rgb(0, 0, 0),rgb(0, 0, 0))',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    margin: '80px 0',
+    animation: 'fadeIn 1s ease-out',
+    '@keyframes fadeIn': {
+      from: { opacity: 0, transform: 'translateY(20px)' },
+      to: { opacity: 1, transform: 'translateY(0)' }
+    }
+  }}
+>
+  Adali Clothing - A Te stílusod, a mi szenvedélyünk!
+</Typography>
+
         <Box
   sx={{
     display: 'flex',
@@ -891,6 +1019,8 @@ import { useNavigate } from 'react-router-dom';
   </Typography>
 </Box>
   </Box>
+  
+ 
 
   <style>
   {`
@@ -930,6 +1060,9 @@ import { useNavigate } from 'react-router-dom';
 </style>
 
 </Box>
+
+
+
 
 {showLogoutAlert && (
   <Box
@@ -1105,10 +1238,101 @@ import { useNavigate } from 'react-router-dom';
   onSpinComplete={handleSpinComplete}
 />
 
+
+  <Typography variant="h4" sx={{
+    textAlign: 'center',
+    mb: 2,
+    color: darkMode ? '#fff' : '#333'
+  }}>
+    Vásárlói Vélemények
+  </Typography>
+
+  <Box
+  ref={scrollbarRef}
+  sx={{
+    width: '100%',
+    height: '12px',
+    mb: 2,
+    overflowX: 'auto',
+    '&::-webkit-scrollbar': {
+      height: '12px',
+      backgroundColor: darkMode ? '#444' : '#eee'
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: darkMode ? '#444' : '#eee',
+      borderRadius: '6px'
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: darkMode ? '#666' : '#999',
+      borderRadius: '6px',
+      '&:hover': {
+        backgroundColor: darkMode ? '#888' : '#777'
+      }
+    }
+  }}
+>
+  <Box sx={{ minWidth: '200%' }}></Box>
+</Box>
+
+<Box
+  ref={contentRef}
+  sx={{
+    display: 'flex',
+    gap: 3,
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+    backgroundColor: darkMode ? '#333' : '#f5f5f5',
+    backgroundImage: darkMode 
+      ? 'radial-gradient(#444 1px, transparent 1px)'
+      : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+    backgroundSize: '20px 20px',
+    '&::-webkit-scrollbar': {
+      display: 'none'
+    }
+  }}
+>
+{Array.isArray(ratings) && ratings.map((rating, index) => (
+    <Box
+      key={index}
+      sx={{
+        backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        padding: 3,
+        borderRadius: 5,
+        width: '300px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2,
+        flexShrink: 0
+      }}
+    >
+      <Typography variant="h6" sx={{ color: darkMode ? '#fff' : '#333' }}>
+        {rating.felhasznalonev}
+      </Typography>
+      <Rating value={rating.rating} readOnly size="large" />
+      <Typography sx={{ color: darkMode ? '#ccc' : '#666', fontSize: '0.9rem' }}>
+        {rating.velemeny}
+      </Typography>
+      <Typography sx={{ color: darkMode ? '#ccc' : '#666', fontSize: '0.8rem' }}>
+        {new Date(rating.date).toLocaleDateString()}
+      </Typography>
+    </Box>
+  ))}
+</Box>
+
+<Box sx={{ 
+      backgroundColor: darkMode ? '#333' : '#f5f5f5',
+      backgroundImage: darkMode 
+        ? 'radial-gradient(#444 1px, transparent 1px)'
+        : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
+      pb: 8 
+    }}>
+    </Box>
+
 <Footer />
 
-      </div>
+  </div>
     );
 };
-
 export default Home;

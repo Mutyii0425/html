@@ -15,7 +15,11 @@ import Termekeink from './termekeink';
 import Tadmin from './admin/tadmin';
 import Termadmin from './admin/termadmin';
 import Fadmin from './admin/fadmin';
+import Admin from './admin/admin';
+import Rateadmin from './admin/rateadmin';
 import Fiokom from './fiokom';
+
+
 
 // Add this to your Routes:
 
@@ -26,6 +30,7 @@ import Fiokom from './fiokom';
 const App = () => {
   return (
     <Router>
+     
       <Routes>
         <Route path="/" element={<Home />} /> {/* Kezdőlap */}
         <Route path="/kezdolap" element={<Home />} />  {/* Kezdőlap */}
@@ -42,9 +47,11 @@ const App = () => {
         <Route path="/tadmin" element={<Tadmin />} />
         <Route path="/termadmin" element={<Termadmin />} />
         <Route path="/fadmin" element={<Fadmin />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/rateadmin" element={<Rateadmin />} />
         <Route path="/fiokom" element={<Fiokom />} />
         
-
+        
         
       </Routes>
     </Router>
