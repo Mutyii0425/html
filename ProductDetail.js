@@ -201,39 +201,43 @@ export default function ProductDetail() {
       minHeight: '100vh',
       transition: 'all 0.3s ease-in-out' // Ez adja az átmenetet
     }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          backgroundColor: darkMode ? '#333' : '#333',
-          padding: '10px 20px',
-          position: 'relative',
-          width: '100%',
-          boxSizing: 'border-box',
-        }}>
-          <IconButton
-            onClick={toggleSideMenu}
-            style={{ color: darkMode ? 'white' : 'white' }}
-          >
-            <MenuIcon />
-          </IconButton>
+        <div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: darkMode ? '#333' : '#333',
+    padding: '10px 20px',
+    position: 'relative',
+    width: '100%',
+    boxSizing: 'border-box',
+    borderBottom: '3px solid #ffffff', // Add this border style
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Add shadow for better separation
+    marginBottom: '10px', // Add some space below the header
+  }}
+>
+  <IconButton
+    onClick={toggleSideMenu}
+    style={{ color: darkMode ? 'white' : 'white' }}
+  >
+    <MenuIcon />
+  </IconButton>
 
-          <Typography
-            variant="h1"
-            style={{
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontWeight: 'bold',
-              fontSize: '2rem',
-              color: darkMode ? 'white' : 'white',
-              margin: 0,
-            }}
-          >
-            Adali Clothing
-          </Typography>
-
-          <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+  <Typography
+    variant="h1"
+    style={{
+      position: 'absolute',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      fontWeight: 'bold',
+      fontSize: '2rem',
+      color: darkMode ? 'white' : 'white',
+      margin: 0,
+    }}
+  >
+    Adali Clothing
+  </Typography>
+    <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {isLoggedIn ? (
               <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <IconButton

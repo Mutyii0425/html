@@ -11,54 +11,33 @@ import {
   IconButton,
   FormGroup,
   FormControlLabel,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Switch,
   Popper,
   Grow,
   Paper,
   ClickAwayListener,
   MenuList,
-  MenuItem,
   Grid,
   Badge,
+  FormHelperText
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Footer from './footer';
 import Menu from './menu2';
-import fehgatya from './fehgatya.png';
-import fehpolo from './fehpolo.png';
-import fehpull from './fehpull.png';
-import kekgatya from './kekgatya.png';
-import kekpolo from './kekpolo.png';
-import kekpull from './kekpull.png';
-import fekgatya from './fekgatya.png';
-import fekpolo from './fekpolo.png';
-import fekpull from './fekpull.png';
-import zoldgatya from './zoldgatya.png';
-import zoldpolo from './zoldpolo.png';
-import zoldpull from './zoldpull.png';
-import bezsgatya from './bezsgatya.png';
-import bezspolo from './bezspolo.png';
-import bezspull from './bezspull.png';
 
-const imageMap = {
-  'fehgatya.png': fehgatya,
-  'fehpolo.png': fehpolo,
-  'fehpull.png': fehpull,
-  'kekgatya.png': kekgatya,
-  'kekpolo.png': kekpolo,
-  'kekpull.png': kekpull,
-  'fekgatya.png': fekgatya,
-  'fekpolo.png': fekpolo,
-  'fekpull.png': fekpull,
-  'zoldgatya.png': zoldgatya,
-  'zoldpolo.png': zoldpolo,
-  'zoldpull.png': zoldpull,
-  'bezsgatya.png': bezsgatya,
-  'bezspolo.png': bezspolo,
-  'bezspull.png': bezspull
-};
+const imageMap = {};
+    const images = require.context('../../backend/kep', false, /\.(png|jpg|jpeg)$/);
+    images.keys().forEach((key) => {
+      const imageName = key.replace('./', '');
+      imageMap[imageName] = images(key);
+    });
+    
 
 export default function TermekReszletek() {
   const { id } = useParams();
@@ -77,7 +56,19 @@ export default function TermekReszletek() {
   const [cartAlert, setCartAlert] = useState(false);
   const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
   const cartItemCount = cartItems.reduce((total, item) => total + item.mennyiseg, 0);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [size, setSize] = useState('');
+  const [errors, setErrors] = useState({});
+  const [sizeError, setSizeError] = useState('');
 
+  const textFieldStyle = {
+    backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+    borderRadius: '8px',
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+    }
+  };
+  
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -145,7 +136,25 @@ export default function TermekReszletek() {
     navigate('/kosar');
   };
 
+  const getSizeOptions = (product) => {
+    // Ellenőrizzük, hogy a termék zokni-e a képfájl neve vagy kategória alapján
+    if (product.imageUrl.toLowerCase().includes('zokni') || 
+        product.nev.toLowerCase().includes('zokni') || 
+        product.kategoriaId === 3) { // Feltételezve, hogy a 3-as kategóriaID a zoknikat jelöli
+      return ['36-39', '40-44', '45-50'];
+    }
+    // Minden más termék esetén a standard ruhaméretek
+    return ['S', 'M', 'L', 'XL', 'XXL'];
+  };
+  
+
   const handleAddToCart = () => {
+    if (!selectedSize) {
+      setSizeError('Kérlek válassz méretet!');
+      return;
+    }
+    setSizeError('');
+    
     const userData = localStorage.getItem('user');
     if (!userData) {
       setLoginAlert(true);
@@ -157,7 +166,7 @@ export default function TermekReszletek() {
     }
   
     const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    const existingItem = cartItems.find(item => item.id === product.id);
+    const existingItem = cartItems.find(item => item.id === product.id && item.size === selectedSize);
   
     if (existingItem) {
       existingItem.mennyiseg += 1;
@@ -165,13 +174,14 @@ export default function TermekReszletek() {
     } else {
       const newItem = {
         ...product,
+        size: selectedSize,
         mennyiseg: 1
       };
       cartItems.push(newItem);
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
     }
     
-    setCartAlert(true); // Csak beállítjuk true-ra
+    setCartAlert(true);
   };
 
   if (!product) return <div>Loading...</div>;
@@ -193,39 +203,43 @@ export default function TermekReszletek() {
       minHeight: '100vh',
       transition: 'all 0.3s ease-in-out' // Ez adja az átmenetet
     }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: darkMode ? '#333' : '#333',
-        padding: '10px 20px',
-        position: 'relative',
-        width: '100%',
-        boxSizing: 'border-box',
-      }}>
-        <IconButton
-          onClick={toggleSideMenu}
-          style={{ color: darkMode ? 'white' : 'white' }}
-        >
-          <MenuIcon />
-        </IconButton>
+      <div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: darkMode ? '#333' : '#333',
+    padding: '10px 20px',
+    position: 'relative',
+    width: '100%',
+    boxSizing: 'border-box',
+    borderBottom: '3px solid #ffffff', // Add this border style
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Add shadow for better separation
+    marginBottom: '10px', // Add some space below the header
+  }}
+>
+  <IconButton
+    onClick={toggleSideMenu}
+    style={{ color: darkMode ? 'white' : 'white' }}
+  >
+    <MenuIcon />
+  </IconButton>
 
-        <Typography
-          variant="h1"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontWeight: 'bold',
-            fontSize: '2rem',
-            color: darkMode ? 'white' : 'white',
-            margin: 0,
-          }}
-        >
-          Adali Clothing
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+  <Typography
+    variant="h1"
+    style={{
+      position: 'absolute',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      fontWeight: 'bold',
+      fontSize: '2rem',
+      color: darkMode ? 'white' : 'white',
+      margin: 0,
+    }}
+  >
+    Adali Clothing
+  </Typography>
+    <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {isLoggedIn ? (
             <Box sx={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <IconButton
@@ -434,16 +448,17 @@ export default function TermekReszletek() {
     ? 'radial-gradient(#444 1px, transparent 1px)'
     : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
   backgroundSize: '20px 20px',
-  minHeight: '100vh',
+  minHeight: '100%',  // 100vh helyett 100%
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
-  padding: '2rem',
+  padding: '1rem',    // 2rem helyett 1rem
+  gap: '1rem',        // 2rem helyett 1rem
   transition: 'all 0.3s ease-in-out'
 }}>
   <Card
     sx={{
-      width: '800px',
+      width: '1000px',
       background: darkMode 
         ? 'linear-gradient(145deg, rgba(51, 51, 51, 0.9), rgba(68, 68, 68, 0.9))'
         : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 0.9))',
@@ -532,7 +547,7 @@ export default function TermekReszletek() {
           <Typography
             variant="body1"
             sx={{
-              color: darkMode ? '#aaa' : '#666',
+              color: darkMode ? '#fff' : '#666',
               background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
               p: 2,
               borderRadius: '8px',
@@ -541,6 +556,38 @@ export default function TermekReszletek() {
           >
             {product.termekleiras}
           </Typography>
+         
+          <FormControl fullWidth error={!!sizeError}>
+  <InputLabel sx={{ 
+    color: darkMode ? '#fff' : 'inherit'
+  }}>
+    Válassz méretet
+  </InputLabel>
+  <Select
+    value={selectedSize}
+    onChange={(e) => {
+      setSelectedSize(e.target.value);
+      setSizeError('');
+    }}
+    sx={{
+      backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+      borderRadius: '8px',
+      color: darkMode ? '#fff' : 'inherit',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+      },
+      '& .MuiSvgIcon-root': {
+        color: darkMode ? '#fff' : 'inherit'
+      }
+    }}
+  >
+    {getSizeOptions(product).map((size) => (
+      <MenuItem key={size} value={size}>{size}</MenuItem>
+    ))}
+  </Select>
+  {sizeError && <FormHelperText>{sizeError}</FormHelperText>}
+</FormControl>
+
 
           <Button
             onClick={handleAddToCart}
@@ -568,7 +615,55 @@ export default function TermekReszletek() {
       </Box>
     </CardContent>
   </Card>
+  
 </div>
+
+<Box sx={{ 
+  width: '100%',
+  maxWidth: '1000px',
+  margin: '0 auto',
+  px: { xs: 2, sm: 3, md: 4 }
+}}>
+  <Typography 
+    variant="h5" 
+    gutterBottom 
+    sx={{
+      textAlign: 'center',
+      mb: 3
+    }}
+  >
+    Termék részletek
+  </Typography>
+  <Grid container spacing={4}>
+    <Grid item xs={12} md={6}>
+      <Box sx={{ 
+        p: 3, 
+        backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', 
+        borderRadius: 2,
+        height: '100%'
+      }}>
+        <Typography variant="h6" gutterBottom>Anyagösszetétel</Typography>
+        <Typography>100% pamut</Typography>
+        <Typography variant="h6" sx={{ mt: 2 }} gutterBottom>Mosási útmutató</Typography>
+        <Typography>40 fokon mosható</Typography>
+      </Box>
+    </Grid>
+    <Grid item xs={12} md={6}>
+      <Box sx={{ 
+        p: 3, 
+        backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', 
+        borderRadius: 2,
+        height: '100%'
+      }}>
+        <Typography variant="h6" gutterBottom>Szállítási információk</Typography>
+        <Typography>2-3 munkanapon belül</Typography>
+        <Typography variant="h6" sx={{ mt: 2 }} gutterBottom>Garancia</Typography>
+        <Typography>30 napos pénzvisszafizetési garancia</Typography>
+      </Box>
+    </Grid>
+  </Grid>
+</Box>
+
 
 
 
@@ -939,7 +1034,15 @@ export default function TermekReszletek() {
     </Card>
   </Box>
 )}
-
+<Box sx={{ 
+      backgroundColor: darkMode ? '#333' : '#f5f5f5',
+      backgroundImage: darkMode 
+        ? 'radial-gradient(#444 1px, transparent 1px)'
+        : 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
+      pb: 15
+    }}>
+    </Box>
 <Footer sx={{
   backgroundColor: darkMode ? '#333' : '#f5f5f5',
   backgroundImage: darkMode 
